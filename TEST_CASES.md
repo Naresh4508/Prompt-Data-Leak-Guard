@@ -1,4 +1,4 @@
-# Prompt Data-Leak Guard v0.1.9 — test cases
+# Prompt Data-Leak Guard v0.2.0 — test cases
 
 Use synthetic values only.
 
