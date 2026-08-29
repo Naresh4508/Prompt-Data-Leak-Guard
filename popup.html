@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prompt Data-Leak Guard</title>
+<style>
+  :root{--paper:#eeeae0;--dim:#e2dccd;--ink:#1b1b1a;--soft:#4a4640;--red:#a32e27;--teal:#2f5f5a;--gray:#8b8377;}
+  *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);width:360px;font-family:Inter,system-ui,sans-serif}
+  .wrap{padding:18px}.kicker{font:700 10px/1.2 ui-monospace,monospace;letter-spacing:.15em;color:var(--gray)}
+  h1{font:700 22px/1.15 ui-monospace,monospace;margin:7px 0 4px}.sub{font-size:11px;line-height:1.45;color:var(--soft)}
+  .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(0,0,0,.12);margin-top:15px;padding-top:13px}
+  .status{display:flex;align-items:center;gap:8px;font:700 11px ui-monospace,monospace}.dot{width:9px;height:9px;border-radius:50%;background:#8b8377}.dot.on{background:var(--teal)}
+  .switch{position:relative;width:42px;height:23px}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#b7b0a3;border-radius:20px;cursor:pointer}.slider:before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;background:var(--paper);border-radius:50%;transition:.15s}.switch input:checked+.slider{background:var(--teal)}.switch input:checked+.slider:before{transform:translateX(19px)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.stat{background:var(--dim);border:1px solid rgba(0,0,0,.12);padding:10px}.n{font:800 20px ui-monospace,monospace}.l{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-top:2px}
+  .section{margin-top:16px}.section label{display:block;font:700 9px ui-monospace,monospace;letter-spacing:.14em;color:var(--gray);margin-bottom:7px}
+  select{width:100%;padding:9px 10px;border:1px solid var(--ink);background:var(--paper);font:12px ui-monospace,monospace;color:var(--ink)}
+  .sites{display:flex;gap:6px;flex-wrap:wrap}.site{border:1px solid rgba(0,0,0,.16);padding:6px 8px;font:10px ui-monospace,monospace;background:#f3f0e8}
+  .note{margin-top:15px;padding-top:12px;border-top:1px solid rgba(0,0,0,.12);font-size:10px;line-height:1.5;color:var(--gray)}
+
+  .context{margin-top:15px;padding:12px;background:#e2dccd;border:1px solid rgba(0,0,0,.12)}
+  .context-head{display:flex;align-items:center;justify-content:space-between;font:700 10px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
+  .context p{margin:7px 0 10px;font-size:10px;line-height:1.45;color:var(--soft)}
+  .check{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--ink)}
+  .check input{accent-color:var(--teal)}
+  .llmrow{display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px}
+  .llmrow input{width:100%;padding:8px;border:1px solid var(--ink);background:var(--paper);font:10px ui-monospace,monospace}
+  .test{padding:8px 9px;border:1px solid var(--teal);background:transparent;color:var(--teal);font:700 9px ui-monospace,monospace;cursor:pointer}
+  .llm-status{margin-top:7px;font:9px ui-monospace,monospace;color:var(--gray);min-height:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">LOCAL DLP / AI PROMPT SECURITY</div>
+  <h1>Prompt Data-Leak Guard</h1>
+  <div class="sub">Detect secrets and personal data before a public AI service receives them.</div>
+
+  <div class="row">
+    <div class="status"><span id="dot" class="dot"></span><span id="statusText">Protection off</span></div>
+    <label class="switch"><input id="enabled" type="checkbox"><span class="slider"></span></label>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div id="scanned" class="n">0</div><div class="l">prompts scanned</div></div>
+    <div class="stat"><div id="flagged" class="n">0</div><div class="l">spans flagged</div></div>
+    <div class="stat"><div id="highRisk" class="n">0</div><div class="l">high risk</div></div>
+    <div class="stat"><div id="sanitized" class="n">0</div><div class="l">sanitized</div></div>
+  </div>
+
+  <div class="section">
+    <label>PRE-SEND POLICY</label>
+    <select id="mode">
+      <option value="review">Review — ask before sending</option>
+      <option value="auto_sanitize">Auto-sanitize — then send</option>
+      <option value="block">Strict block — never auto-send</option>
+    </select>
+  </div>
+
+  <div class="context">
+    <div class="context-head"><span>CONTEXTUAL LOCAL LLM</span><span>OPTIONAL</span></div>
+    <p>Use a model running on this computer to catch context-dependent PII and proprietary data that rules can miss. Raw prompt stays local.</p>
+    <label class="check"><input id="contextualEnabled" type="checkbox"> Enable contextual scan before send</label>
+    <div class="llmrow"><input id="ollamaModel" placeholder="qwen3:4b-instruct"><button id="testOllama" class="test">Test</button></div>
+    <div class="llm-status" id="llmStatus">Ollama: not checked</div>
+  </div>
+
+  <div class="section">
+    <label>SUPPORTED IN THIS BUILD</label>
+    <div class="sites"><span class="site">ChatGPT</span><span class="site">Gemini</span><span class="site">Claude</span></div>
+  </div>
+
+  <div class="note">Privacy by design: detection runs in the page using local JavaScript. The extension does not send prompt contents to a remote server.</div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

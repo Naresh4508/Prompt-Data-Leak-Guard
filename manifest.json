@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt Data-Leak Guard",
+  "version": "0.2.0",
+  "description": "Local-first GenAI DLP: deterministic + contextual local-LLM detection before prompts reach public AI.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*",
+    "https://gemini.google.com/*",
+    "https://claude.ai/*",
+    "http://127.0.0.1:11434/*",
+    "http://localhost:11434/*"
+  ],
+  "action": {
+    "default_title": "Prompt Data-Leak Guard",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*",
+        "https://claude.ai/*"
+      ],
+      "js": [
+        "scanner.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  }
+}
