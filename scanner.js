@@ -22,7 +22,19 @@
 
     { cat: 'Database connection string', risk: 'high', re: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\/[^\s"'<>]+/gi,
       explain: 'A database URI can contain credentials, hosts, database names or other connection details.', placeholder: '[DATABASE_URL_REDACTED]' },
+    
+    // ------------------------- PHI / BLOOD GROUP -------------------------
+    {
+      cat: 'Blood group / blood type',
+      risk: 'high',
 
+      // Explicitly labeled blood groups only.
+      // Supports A+, A-, B+, B-, AB+, AB-, O+, O-.
+      re: /\b(?:blood\s*(?:group|type)|blood\s*grp|ABO\s*(?:group|type)?|Rh(?:esus)?\s*(?:factor|type)?)\s*[:=]?\s*(?:AB|A|B|O)\s*[+-](?![A-Za-z0-9])/gi,
+      explain: 'Blood group is sensitive health information, particularly when associated with an identifiable person.',
+      placeholder: (m) => m.replace(/((?:[:=]\s*))(?:(?:AB|A|B|O)\s*[+-])$/i, '$1[BLOOD_GROUP_REDACTED]')
+    },
+    
     {
       cat: 'Generic secret assignment', risk: 'high',
       // Handles bare and compound names such as DB_PASSWORD=, SERVICE_TOKEN=,
@@ -98,7 +110,15 @@
         return m.slice(0, sep + 1) + ws + '[AADHAAR_REDACTED]';
       }
     },
-
+    
+    {
+      cat: 'Voter ID / EPIC (IN)',
+      risk: 'high',
+      re: /\b(?:voter\s*(?:id|identity|card)|epic)\s*(?:number|no\.?|id)?\s*[:=]\s*[A-Z]{3}[A-Z0-9]{7,10}\b/gi,
+      explain: 'A labeled Indian Voter ID (EPIC) is a government identity identifier and sensitive personal information.',
+      placeholder: (m) => m.replace(/([:=]\s*)[A-Z]{3}[A-Z0-9]{7,10}\b/i,'$1[VOTER_ID_REDACTED]')
+    },
+    
     {
       cat: 'Aadhaar number (IN)', risk: 'high',
       // Unlabeled 12-digit candidates MUST pass Verhoeff validation. This
